@@ -1,0 +1,37 @@
+# Node
+node_modules/
+chrome-ext/node_modules/
+
+# Build output
+chrome-ext/.output/
+chrome-ext/.wxt/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test artifacts
+.web2md/
+
+# Design docs
+.plan/
+
+# Claude
+.claude/
+
+# Handoff
+.handoffs/
