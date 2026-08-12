@@ -55,8 +55,9 @@ class FastAPIManager:
         deadline = time.time() + timeout
         while time.time() < deadline:
             try:
+                # trust_env=False：回环地址请求不走 HTTP 代理（避免代理 502）
                 resp = httpx.get(f"http://127.0.0.1:{self.port}/health",
-                                 timeout=1.0)
+                                 timeout=1.0, trust_env=False)
                 if resp.status_code == 200:
                     return True
             except Exception:

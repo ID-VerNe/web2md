@@ -15,10 +15,6 @@ export default defineConfig({
       "alarms",
     ],
     host_permissions: ["<all_urls>"],
-    options_ui: {
-      page: "src/options/index.html",
-      open_in_tab: true,
-    },
   },
   modules: ["@wxt-dev/module-react"],
 });

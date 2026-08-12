@@ -3,10 +3,12 @@
 
 import { register } from "./registry";
 import { xhsExtractor } from "./xhs";
+import { xExtractor } from "./x";
 import { genericExtractor } from "./generic";
 
 export function registerAll(): void {
   register(xhsExtractor);
+  register(xExtractor);
   register(genericExtractor); // 通用兜底必须最后注册
 }
 

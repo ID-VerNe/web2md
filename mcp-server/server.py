@@ -81,7 +81,8 @@ async def web2md_extract(
     output_dir.mkdir(exist_ok=True)
 
     # 创建任务
-    async with httpx.AsyncClient(base_url=base_url, timeout=10.0) as client:
+    # trust_env=False：回环地址请求不走 HTTP 代理
+    async with httpx.AsyncClient(base_url=base_url, timeout=10.0, trust_env=False) as client:
         resp = await client.post("/api/tasks/create", json={
             "tasks": tasks,
             "content_mode": content_mode,

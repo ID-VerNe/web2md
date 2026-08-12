@@ -1,31 +1,49 @@
 import React, { useState, useEffect } from "react";
-import { storage } from "wxt/storage";
 
 const DEFAULT_PORT = 8765;
+
+/** 封装 chrome.storage.local 的 get 操作 */
+function storageGet<T>(key: string): Promise<T | undefined> {
+  return new Promise((resolve) => {
+    chrome.storage.local.get(key, (result) => resolve(result[key] as T | undefined));
+  });
+}
+
+/** 封装 chrome.storage.local 的 set 操作 */
+function storageSet(key: string, value: unknown): Promise<void> {
+  return new Promise((resolve) => {
+    chrome.storage.local.set({ [key]: value }, resolve);
+  });
+}
 
 export default function Options() {
   const [port, setPort] = useState(DEFAULT_PORT);
   const [contentMode, setContentMode] = useState<"article" | "full">("article");
+  const [scrollSteps, setScrollSteps] = useState(10);
   const [blacklist, setBlacklist] = useState<string[]>([]);
   const [newRule, setNewRule] = useState("");
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    storage.getItem<string>("local:port").then((v) => {
+    storageGet<string>("port").then((v) => {
       if (v) setPort(Number(v));
     });
-    storage.getItem<string>("local:contentMode").then((v) => {
+    storageGet<string>("contentMode").then((v) => {
       if (v === "full" || v === "article") setContentMode(v);
     });
-    storage.getItem<string[]>("local:blacklist").then((v) => {
+    storageGet<number>("scrollSteps").then((v) => {
+      if (v && v > 0) setScrollSteps(v);
+    });
+    storageGet<string[]>("blacklist").then((v) => {
       if (v) setBlacklist(v);
     });
   }, []);
 
   const save = async () => {
-    await storage.setItem("local:port", String(port));
-    await storage.setItem("local:contentMode", contentMode);
-    await storage.setItem("local:blacklist", blacklist);
+    await storageSet("port", String(port));
+    await storageSet("contentMode", contentMode);
+    await storageSet("scrollSteps", scrollSteps);
+    await storageSet("blacklist", blacklist);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };
@@ -59,6 +77,19 @@ export default function Options() {
         <option value="article">仅正文（推荐）</option>
         <option value="full">完整页面</option>
       </select>
+
+      <h3>X/Twitter 滚动加载屏数</h3>
+      <p style={{ fontSize: 13, color: "#666" }}>
+        数值越大抓取内容越多，建议 10-15 屏，耗时随之增加
+      </p>
+      <input
+        type="number"
+        min={2}
+        max={30}
+        value={scrollSteps}
+        onChange={(e) => setScrollSteps(Math.max(2, Math.min(30, Number(e.target.value))))}
+        style={{ width: "100%", padding: 8, marginBottom: 16 }}
+      />
 
       <h3>URL 黑名单</h3>
       <p style={{ fontSize: 13, color: "#666" }}>

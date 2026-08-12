@@ -1,7 +1,20 @@
 import React, { useState, useEffect } from "react";
-import { storage } from "wxt/storage";
 
 const DEFAULT_PORT = 8765;
+
+/** 封装 chrome.storage.local 的 get 操作 */
+function storageGet<T>(key: string): Promise<T | undefined> {
+  return new Promise((resolve) => {
+    chrome.storage.local.get(key, (result) => resolve(result[key] as T | undefined));
+  });
+}
+
+/** 封装 chrome.storage.local 的 set 操作 */
+function storageSet(key: string, value: unknown): Promise<void> {
+  return new Promise((resolve) => {
+    chrome.storage.local.set({ [key]: value }, resolve);
+  });
+}
 
 export default function App() {
   const [port, setPort] = useState(DEFAULT_PORT);
@@ -10,21 +23,21 @@ export default function App() {
   const [newRule, setNewRule] = useState("");
 
   useEffect(() => {
-    storage.getItem<string>("local:port").then((v) => {
+    storageGet<string>("port").then((v) => {
       if (v) setPort(Number(v));
     });
-    storage.getItem<string>("local:contentMode").then((v) => {
+    storageGet<string>("contentMode").then((v) => {
       if (v === "full" || v === "article") setContentMode(v);
     });
-    storage.getItem<string[]>("local:blacklist").then((v) => {
+    storageGet<string[]>("blacklist").then((v) => {
       if (v) setBlacklist(v);
     });
   }, []);
 
   const save = async () => {
-    await storage.setItem("local:port", String(port));
-    await storage.setItem("local:contentMode", contentMode);
-    await storage.setItem("local:blacklist", blacklist);
+    await storageSet("port", String(port));
+    await storageSet("contentMode", contentMode);
+    await storageSet("blacklist", blacklist);
   };
 
   const addRule = () => {
@@ -85,7 +98,7 @@ export default function App() {
           >
             <span>{rule}</span>
             <button onClick={() => removeRule(i)} style={{ cursor: "pointer" }}>
-              ✕
+              x
             </button>
           </li>
         ))}
