@@ -4,6 +4,7 @@ chrome-ext/node_modules/
 
 # Build output
 chrome-ext/.output/
+.wxt/
 chrome-ext/.wxt/
 
 # Python
@@ -26,6 +27,9 @@ Thumbs.db
 
 # Test artifacts
 .web2md/
+
+# Research / analysis output (multi-lens skill artifacts)
+outputs/
 
 # Design docs
 .plan/
