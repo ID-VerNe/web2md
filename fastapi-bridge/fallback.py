@@ -3,14 +3,18 @@
 当插件无法匹配标签页时，由 FastAPI 直接 HTTP 抓取 URL 并转 Markdown。
 
 流程:
-1. httpx 请求 URL → HTML
-2. readability-lxml 提取正文（仅 article 模式）
-3. html2text 转 Markdown
+1. 校验 URL（仅 http/https，拒绝回环/私网/链路本地地址）
+2. httpx 请求 URL → HTML（不走代理环境变量）
+3. readability-lxml 提取正文（仅 article 模式）
+4. html2text 转 Markdown
 """
 from __future__ import annotations
 
+import ipaddress
+import socket
 import sys
 from pathlib import Path
+from urllib.parse import urlparse
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
@@ -18,13 +22,104 @@ import httpx
 from models import ContentMode
 
 
-def fetch_html(url: str, timeout: float = 15.0) -> str | None:
-    """HTTP GET 请求 URL，返回 HTML 字符串。"""
+class UnsafeURLError(ValueError):
+    """URL 不在允许的范围内（非 http/https 或指向内网）。"""
+
+
+# 禁止访问的地址段（回环 / RFC 1918 私网 / 链路本地 / 组播 / 保留 / IPv6 等价段）。
+# 不用 ipaddress.is_private：后者把 198.18.0.0/15 等代理拦截段也标为
+# private，会误杀走代理的环境。
+BLOCKED_NETWORKS = [
+    ipaddress.ip_network("127.0.0.0/8"),       # 回环
+    ipaddress.ip_network("10.0.0.0/8"),        # RFC 1918
+    ipaddress.ip_network("172.16.0.0/12"),     # RFC 1918
+    ipaddress.ip_network("192.168.0.0/16"),    # RFC 1918
+    ipaddress.ip_network("169.254.0.0/16"),    # 链路本地
+    ipaddress.ip_network("0.0.0.0/8"),         # 本网络
+    ipaddress.ip_network("224.0.0.0/4"),       # 组播
+    ipaddress.ip_network("240.0.0.0/4"),       # 保留
+    ipaddress.ip_network("::1/128"),           # IPv6 回环
+    ipaddress.ip_network("fc00::/7"),          # 唯一本地地址
+    ipaddress.ip_network("fe80::/10"),         # 链路本地
+    ipaddress.ip_network("ff00::/8"),          # 组播
+    ipaddress.ip_network("::/128"),            # 未指定
+]
+
+
+def _ip_is_blocked(ip: ipaddress._BaseAddress) -> bool:
+    """单个 IP 是否落在禁止段内。"""
+    return any(ip in net for net in BLOCKED_NETWORKS)
+
+
+def _host_is_blocked(host: str) -> bool:
+    """域名解析后的所有 IP 是否任一落在禁止段内（防 DNS rebinding 到内网）。
+
+    解析失败也保守拒绝。
+    """
     try:
-        resp = httpx.get(url, timeout=timeout, follow_redirects=True)
-        resp.raise_for_status()
-        return resp.text
-    except httpx.HTTPError:
+        infos = socket.getaddrinfo(host, None)
+    except socket.gaierror:
+        return True
+    for info in infos:
+        ip_str = info[4][0].split("%", 1)[0]  # 去掉 IPv6 zone id
+        try:
+            ip = ipaddress.ip_address(ip_str)
+        except ValueError:
+            continue
+        if _ip_is_blocked(ip):
+            return True
+    return False
+
+
+def validate_url(url: str) -> str:
+    """校验 URL scheme 与目标主机，返回原 URL 或抛 UnsafeURLError。
+
+    - 仅允许 http / https
+    - 字面量 IP 直接判；域名解析后判，防 DNS rebinding 到内网
+    """
+    if not url:
+        raise UnsafeURLError("empty url")
+    parsed = urlparse(url)
+    if parsed.scheme not in ("http", "https"):
+        raise UnsafeURLError(f"scheme not allowed: {parsed.scheme!r}")
+    host = parsed.hostname
+    if not host:
+        raise UnsafeURLError("no host")
+    try:
+        ip = ipaddress.ip_address(host)
+        if _ip_is_blocked(ip):
+            raise UnsafeURLError(f"ip not allowed: {host}")
+    except ValueError:
+        if _host_is_blocked(host):
+            raise UnsafeURLError(f"host resolves to private address: {host}")
+    return url
+
+
+def fetch_html(url: str, timeout: float = 15.0) -> str | None:
+    """HTTP GET 请求 URL，返回 HTML 字符串。
+
+    trust_env=False：不走 HTTP_PROXY/HTTPS_PROXY 等环境变量，避免代理 SSRF。
+    跟随重定向但每次重定向后重新校验目标 URL。
+    """
+    try:
+        validate_url(url)
+    except UnsafeURLError:
+        return None
+
+    try:
+        with httpx.Client(
+            timeout=timeout, trust_env=False, follow_redirects=True,
+        ) as client:
+            resp = client.get(url)
+            # 重定向后最终 URL 也要校验
+            if resp.url:
+                try:
+                    validate_url(str(resp.url))
+                except UnsafeURLError:
+                    return None
+            resp.raise_for_status()
+            return resp.text
+    except (httpx.HTTPError, UnsafeURLError):
         return None
 
 
