@@ -15,6 +15,34 @@ DOM 结构（已确认 2026-08-16）：
 
 import type { Extractor, ExtractOptions } from "./types";
 
+// 清理答案正文里的内联噪声：
+// - `sn._setImageSrc(...)` 图片 base64 内联代码
+// - `转到此商品的商品查看器对话框` 等占位
+function cleanAnswer(s: string): string {
+  let out = s;
+  // 去掉内联图片 base64 代码块
+  out = out.replace(/sn\._setImageSrc\([^)]*\)/g, "");
+  // 去掉"转到此商品的商品查看器对话框"占位
+  out = out.replace(/转到此商品的商品查看器对话框/g, "");
+  out = out.replace(/\s+/g, " ").trim();
+  return out;
+}
+
+// 收集 root 下、stopBefore 元素之前的所有可见文本（按 DOM 顺序）。
+// TreeWalker 前序遍历，遇到 stopBefore 内部的文本节点时停止。
+function collectTextBefore(root: HTMLElement, stopBefore: Element): string {
+  const parts: string[] = [];
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
+  while (true) {
+    const node = walker.nextNode();
+    if (!node) break;
+    if (stopBefore.contains(node)) break;
+    const t = (node.textContent || "").trim();
+    if (t) parts.push(t);
+  }
+  return parts.join(" ");
+}
+
 export const googleAiExtractor: Extractor = {
   id: "google-ai",
 
@@ -55,27 +83,53 @@ export const googleAiExtractor: Extractor = {
       }
     }
 
-    // 2. AI 回答：从 turn 容器取第一份回答。
+    // 2. AI 回答：从 turn 容器取回答。
     // 用 [data-scope-id="turn"] 代替 root，因为 root 下 Google 会把
     // 回答+操作区重复渲染多份（不同交互状态），而 turn 容器只渲染一份。
+    // 答案正文在 [data-scope-id="turn"] 内，但回答与操作区在同一个容器里，
+    // 直接 textContent 会把操作区按钮文字混进来。改用 DOM 遍历：
+    // 从 turn 内第一个文本节点开始收集，到遇到操作区容器
+    // (`[data-ved]` 的复制/分享按钮所在区) 之前停止。
     const turn = root.querySelector('[data-scope-id="turn"]') as HTMLElement | null;
     if (turn) {
-      let text = turn.textContent?.replace(/\s+/g, " ").trim() || "";
-      if (text) {
-        // 回答正文起止锚点
-        const answerStarts = ["收到", "您好", "好的", "当然", "是的"];
-        let start = -1;
-        for (const s of answerStarts) {
-          const i = text.indexOf(s);
-          if (i >= 0 && (start < 0 || i < start)) start = i;
+      // 操作区的入口标志：复制按钮 `button[aria-label="复制文字"]`
+      // 它所在的是 [data-xid="Gd7Hsc"] 操作区容器。答案正文都在它之前。
+      const actionZone = turn.querySelector('[data-xid="Gd7Hsc"]');
+      let answer = "";
+      if (actionZone && turn.contains(actionZone)) {
+        // 取 turn 下、actionZone 之前的所有文本
+        answer = collectTextBefore(turn, actionZone);
+      } else {
+        // 回退：用 textContent + 锚点切分
+        let text = turn.textContent?.replace(/\s+/g, " ").trim() || "";
+        const actionStart = text.indexOf("复制文字");
+        const cut = actionStart >= 0 ? actionStart : text.indexOf("复制");
+        const altCut = cut >= 0 ? cut : text.indexOf("分享公开链接");
+        if (altCut > 0) answer = text.slice(0, altCut).trim();
+      }
+      // 清理图片 base64 内联代码 + 商品查看器占位
+      answer = cleanAnswer(answer);
+      if (answer) parts.push(`## A:\n\n${answer}`);
+
+      // 3. 参考链接：从 turn 容器内提取带引用标注的链接 aria-label="来源名 (+N)..."
+      const refs: string[] = [];
+      const citeLinks = turn.querySelectorAll('a[aria-label*="(+"]');
+      const seen = new Set<string>();
+      for (const link of Array.from(citeLinks)) {
+        const href = (link as HTMLAnchorElement).href;
+        if (!href || !href.startsWith("http") || href.includes("google.com")) continue;
+        if (seen.has(href)) continue;
+        seen.add(href);
+        const label = link.getAttribute("aria-label") || "";
+        const m = label.match(/^(.+?)\s*\((\+\d+)\)/);
+        if (m) {
+          refs.push(`- ${m[1].trim()} [${m[2]}] - ${href}`);
+        } else {
+          refs.push(`- ${href}`);
         }
-        // 操作区入口：回答后第一个"复制"即是操作区的复制按钮
-        const actionStart = text.indexOf("复制", start >= 0 ? start : 0);
-        if (start >= 0 && actionStart > start) {
-          let answer = text.slice(start, actionStart).trim();
-          answer = answer.replace(/\s+$/g, "").trim();
-          if (answer) parts.push(`## A:\n\n${answer}`);
-        }
+      }
+      if (refs.length) {
+        parts.push(`## References\n\n${refs.join("\n")}`);
       }
     }
 
