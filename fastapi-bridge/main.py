@@ -94,6 +94,11 @@ def create_tasks(req: CreateTasksRequest):
 
 @app.get("/api/tasks/poll", response_model=PollResponse)
 def poll_task():
+    """Chrome 扩展轮询待处理任务。
+
+    poll 标记任务为 PROCESSING。若扩展不在线（无人 poll），任务会一直
+    停在 PENDING/PROCESSING，由 MCP 工具端在超时后走 HTTP fallback。
+    """
     task = queue.poll()
     if task is None:
         return PollResponse()
@@ -115,6 +120,7 @@ class WriteResultRequest(BaseModel):
 
 @app.post("/api/tasks/{task_id}/result", response_model=dict)
 def write_result(task_id: str, req: WriteResultRequest):
+    """Chrome 扩展回写处理结果。"""
     ok = queue.complete_task(task_id, req.markdown, req.status)
     if not ok:
         raise HTTPException(status_code=404, detail="task not found")
@@ -136,8 +142,19 @@ def get_result(task_id: str):
 
 
 def main(port: int = 8765) -> None:
-    """启动 FastAPI 服务。"""
+    """启动 FastAPI 服务（独立运行模式）。"""
     uvicorn.run(app, host="127.0.0.1", port=port, log_level="info")
+
+
+def check_health(port: int = 8765, timeout: float = 0.5) -> bool:
+    """探测端口上是否已有健康的 web2md bridge 服务。"""
+    try:
+        import httpx
+        resp = httpx.get(f"http://127.0.0.1:{port}/health",
+                         timeout=timeout, trust_env=False)
+        return resp.status_code == 200
+    except Exception:
+        return False
 
 
 if __name__ == "__main__":
