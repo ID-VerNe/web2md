@@ -36,11 +36,23 @@ export const googleAiExtractor: Extractor = {
 
     const parts: string[] = [];
 
-    // 1. 用户 query：从复制按钮的 aria-label 提取
-    const copyBtn = root.querySelector('[aria-label^="复制"]') as HTMLElement | null;
-    if (copyBtn?.ariaLabel) {
-      const m = copyBtn.ariaLabel.match(/复制["""](.+?)["""]/);
-      if (m) parts.push(`# Q: ${m[1]}\n`);
+    // 1. 用户 query：优先从 [jsname="y5v2y"] 取（query 文本容器，
+    // 直接含纯文本），回退到复制按钮 aria-label `复制"测试"`。
+    const qSpan = root.querySelector('[jsname="y5v2y"]');
+    if (qSpan?.textContent) {
+      const q = qSpan.textContent.trim();
+      if (q) parts.push(`# Q: ${q}\n`);
+    }
+    if (!parts.length) {
+      const copyBtns = root.querySelectorAll('[aria-label^="复制"]');
+      for (const btn of Array.from(copyBtns)) {
+        const label = (btn as HTMLElement).ariaLabel || "";
+        const m = label.match(/复制["""](.+?)["""]/);
+        if (m) {
+          parts.push(`# Q: ${m[1]}\n`);
+          break;
+        }
+      }
     }
 
     // 2. AI 回答：从 turn 容器取第一份回答。
