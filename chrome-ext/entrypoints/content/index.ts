@@ -8,20 +8,6 @@ export default defineContentScript({
     // 注册站点专用提取器 + 通用兜底
     registerAll();
 
-    // 检查黑名单
-    chrome.storage.local.get("blacklist", (result) => {
-      const blacklist: string[] = result.blacklist || [];
-      const url = window.location.href;
-      const matched = blacklist.some((rule) => {
-        const pattern = rule.replace(/\*/g, ".*");
-        return new RegExp(pattern).test(url);
-      });
-      if (matched) {
-        console.log("web2md: blacklisted, skipping", url);
-        return;
-      }
-    });
-
     chrome.runtime.onMessage.addListener(
       (
         message: any,
@@ -31,28 +17,43 @@ export default defineContentScript({
         if (message.type === "web2md_extract") {
           const contentMode = message.contentMode || "article";
           const url = window.location.href;
-          const extractor = match(url);
 
-          if (!extractor) {
-            // 理论上不会走到这里（通用提取器永远匹配），防御兜底
-            sendResponse({ markdown: document.body?.innerText || "", source: "fallback" });
-            return true;
-          }
+          // 收到消息时检查黑名单：黑名单命中则直接返回空
+          chrome.storage.local.get("blacklist", (result) => {
+            const blacklist: string[] = result.blacklist || [];
+            const matched = blacklist.some((rule) => {
+              const pattern = rule.replace(/\*/g, ".*");
+              return new RegExp(pattern).test(url);
+            });
+            if (matched) {
+              console.log("web2md: blacklisted, skipping", url);
+              sendResponse({ markdown: "", source: "blacklisted" });
+              return;
+            }
 
-          extractor
-            .extract(document, { contentMode })
-            .then((markdown) => {
-              if (markdown) sendResponse({ markdown, source: extractor.id });
-              else {
-                // 专用提取返回 null/空 → 回退纯文本
-                sendResponse({ markdown: document.body?.innerText || "", source: "fallback" });
-              }
-            })
-            .catch(() =>
-              sendResponse({ markdown: document.body?.innerText || "", source: "fallback" })
-            );
+            const extractor = match(url);
+            if (!extractor) {
+              // 理论上不会走到这里（通用提取器永远匹配），防御兜底
+              sendResponse({ markdown: document.body?.innerText || "", source: "fallback" });
+              return;
+            }
 
-          return true;
+            extractor
+              .extract(document, { contentMode })
+              .then((markdown) => {
+                if (markdown) {
+                  sendResponse({ markdown, source: extractor.id, extractorLen: markdown.length });
+                } else {
+                  // 专用提取返回 null/空 → 回退纯文本
+                  sendResponse({ markdown: document.body?.innerText || "", source: "fallback", extractorLen: 0 });
+                }
+              })
+              .catch((err) => {
+                sendResponse({ markdown: document.body?.innerText || "", source: "fallback", extractorLen: -1, extractorError: String(err) });
+              });
+          });
+
+          return true; // 异步 sendResponse
         }
 
         if (message.type === "web2md_debug_dom") {
