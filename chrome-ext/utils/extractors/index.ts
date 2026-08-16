@@ -9,6 +9,8 @@ import { wikipediaExtractor } from "./wikipedia";
 import { githubExtractor } from "./github";
 import { huggingfaceExtractor } from "./huggingface";
 import { modelscopeExtractor } from "./modelscope";
+import { npmExtractor } from "./npm";
+import { stackexchangeExtractor } from "./stackexchange";
 import { genericExtractor } from "./generic";
 
 export function registerAll(): void {
@@ -19,6 +21,8 @@ export function registerAll(): void {
   register(githubExtractor);
   register(huggingfaceExtractor);
   register(modelscopeExtractor);
+  register(npmExtractor);
+  register(stackexchangeExtractor);
   register(genericExtractor); // 通用兜底必须最后注册
 }
 
