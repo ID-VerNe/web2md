@@ -21,7 +21,14 @@ export const xExtractor: Extractor = {
     // 1. 个人资料（必须在滚动前提取，滚动后顶部 DOM 可能被回收）
     const profile = isSingleTweet ? null : extractProfile(doc);
 
-    // 2. 滚动加载并收集推文
+    // 2. 等首屏推文渲染。隐藏后台标签页渲染优先级低，固定等待
+    //    往往不够：不等到首屏推文就开滚，IntersectionObserver 无目标，
+    //    触发不了懒加载 → 0 条推文。前台标签页几乎立即满足。
+    if (!isSingleTweet) {
+      await waitForFirstTweet(doc, 15000);
+    }
+
+    // 3. 滚动加载并收集推文
     const tweets = await scrollAndCollect(isSingleTweet);
 
     if (tweets.length === 0) return null;
@@ -51,6 +58,20 @@ interface CollectedTweet {
 }
 
 const SCROLL_DELAY_MS = 900;
+
+// 等首屏推文出现（最多 timeoutMs）。隐藏后台标签页渲染慢，不等
+// 到首屏推文就滚动会错过 IntersectionObserver 懒加载触发，导致 0 条。
+async function waitForFirstTweet(doc: Document, timeoutMs: number): Promise<void> {
+  const deadline = Date.now() + timeoutMs;
+  const hasTweets = () =>
+    doc.querySelector('[data-testid="primaryColumn"] [data-testid="tweet"]');
+  // 已有首屏推文 → 不等
+  if (hasTweets()) return;
+  while (Date.now() < deadline) {
+    await sleep(300);
+    if (hasTweets()) return;
+  }
+}
 
 async function getScrollSteps(): Promise<number> {
   return new Promise((resolve) => {
