@@ -11,6 +11,7 @@ import { huggingfaceExtractor } from "./huggingface";
 import { modelscopeExtractor } from "./modelscope";
 import { npmExtractor } from "./npm";
 import { stackexchangeExtractor } from "./stackexchange";
+import { googleAiExtractor } from "./google-ai";
 import { genericExtractor } from "./generic";
 
 export function registerAll(): void {
@@ -23,6 +24,7 @@ export function registerAll(): void {
   register(modelscopeExtractor);
   register(npmExtractor);
   register(stackexchangeExtractor);
+  register(googleAiExtractor);
   register(genericExtractor); // 通用兜底必须最后注册
 }
 

@@ -289,6 +289,7 @@ export default defineBackground(() => {
       if (host.includes("github.com")) return ["article.markdown-body", ".repository-content", "#readme"];
       if (host.includes("npmjs.com")) return ["#readme"];
       if (host.includes("stackoverflow") || host.includes("stackexchange") || host.includes("serverfault") || host.includes("superuser") || host.includes("askubuntu") || host.includes("mathoverflow")) return ["#question"];
+      if (host.includes("google.com") && new URL(url).searchParams.get("udm") === "50") return ['[data-xid="aim-mars-turn-root"]'];
     } catch {
       return [];
     }
