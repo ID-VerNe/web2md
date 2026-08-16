@@ -1,6 +1,6 @@
 /// <reference types="wxt-vite-plugin" />
 
-import { validateUrl, UnsafeUrlError } from "@/utils/url-validator";
+import { validateUrl, UnsafeUrlError, isRedirected } from "@/utils/url-validator";
 
 export default defineBackground(() => {
   console.log("web2md background service worker loaded");
@@ -211,8 +211,25 @@ export default defineBackground(() => {
       // 含 >200 字符文本再提取。SSR 页面立即满足。
       await waitForContent(tabId, url, 10000);
 
+      // 重定向校验：对比请求 URL 与 tab 最终 URL 的 pathname。
+      // 部分站点（Stack Overflow）对自动化/隐藏 tab 反制，把请求 URL
+      // 重定向到另一个完全不同的页面（/questions/76161046 →
+      // /questions/76152978）。这时提取到的是错误内容，比没有结果更糟
+      // （污染数据），直接判 failed，不写回。
+      // 合法 normalize（大小写归一、trailing slash、http→https）不影响，
+      // 只比 normalize 后的 pathname，忽略 hash/query。
+      const finalTab = await chrome.tabs.get(tabId);
+      if (isRedirected(url, finalTab?.url)) {
+        console.log(
+          "[web2md-diag] redirected, task failed",
+          { taskId, requested: url, final: finalTab?.url }
+        );
+        await reportResult(taskId, null, "failed");
+        return;
+      }
+
       // 6-8. 提取（content script 消息 + 兜底注入，与 executeTask 一致）
-      const markdown = await extractFromTab(tabId);
+      const markdown = await extractFromTab(tabId, url);
 
       // 11. 回写结果
       await reportResult(taskId, markdown);
@@ -270,6 +287,8 @@ export default defineBackground(() => {
       if (host.includes("modelscope.cn")) return [".ms-markdown-wrapper"];
       if (host.includes("huggingface.co")) return [".model-card-content.prose"];
       if (host.includes("github.com")) return ["article.markdown-body", ".repository-content", "#readme"];
+      if (host.includes("npmjs.com")) return ["#readme"];
+      if (host.includes("stackoverflow") || host.includes("stackexchange") || host.includes("serverfault") || host.includes("superuser") || host.includes("askubuntu") || host.includes("mathoverflow")) return ["#question"];
     } catch {
       return [];
     }
@@ -313,18 +332,30 @@ export default defineBackground(() => {
   }
 
   // 从已加载标签页提取 markdown：content script 消息优先，兜底 executeScript
-  async function extractFromTab(tabId: number): Promise<string | null> {
+  // requestedUrl 用于 content script 校验 JS 层重定向（SO 的
+  // history.replaceState）。openAndExtractTab 传请求 URL；executeTask
+  // 匹配已有 tab 时传 tab.url（匹配到的 tab 即目标，无需校验，传
+  // undefined 跳过）。
+  async function extractFromTab(tabId: number, requestedUrl?: string): Promise<string | null> {
     let markdown: string | null = null;
     let csResponse: any = null; // 诊断：记录 content script 返回
 
-    // content script 消息（重试 5 次）
+  // content script 消息（重试 5 次），带上 expectedUrl 供 content script
+    // 校验 JS 层重定向（SO 的 history.replaceState）。
     for (let attempt = 0; attempt < 5; attempt++) {
       try {
         const response = await chrome.tabs.sendMessage(tabId, {
           type: "web2md_extract",
           contentMode: "article",
+          expectedUrl: requestedUrl,
         });
         csResponse = response;
+        if (response?.source === "redirected") {
+          // JS 层重定向：SO 把请求的问题 ID 换成了另一个。返回 null 让
+          // 上层 reportResult(status=failed)，不写回错误页面内容。
+          console.log("[web2md-diag] content script reported redirect", { tabId, requestedUrl });
+          return null;
+        }
         if (response?.markdown) {
           markdown = response.markdown;
           break;

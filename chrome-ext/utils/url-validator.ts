@@ -67,3 +67,44 @@ export function validateUrl(url: string): string {
 
   return url;
 }
+
+/**
+ * 判断 tab 最终 URL 是否相对请求 URL 发生了"实质性"重定向。
+ *
+ * 只比较 normalize 后的 hostname + pathname，忽略：
+ * - protocol（http→https 合法）
+ * - 大小写归一（host/path 大小写不敏感）
+ * - trailing slash（/a/b 与 /a/b/ 等价）
+ * - query / hash（站点常加跟踪参数、缓存 key）
+ *
+ * hostname 变 = 跨域重定向（如知乎跳登录页），pathname 变 = 同站换页
+ * （SO 把 /questions/76161046 → /questions/76152978）。任一变化都判为
+ * 重定向，避免把错误页面内容当结果写回。
+ *
+ * finalUrl 为空（tab 已关 / 取不到）时保守返回 false，不误判。
+ */
+export function isRedirected(requestedUrl: string, finalUrl?: string): boolean {
+  if (!finalUrl) return false;
+  const a = safeParse(requestedUrl);
+  const b = safeParse(finalUrl);
+  if (!a || !b) return false;
+  const aPath = normalizePath(a);
+  const bPath = normalizePath(b);
+  return a.hostname.toLowerCase() !== b.hostname.toLowerCase()
+    || aPath !== bPath;
+}
+
+function safeParse(u: string): URL | null {
+  try {
+    return new URL(u);
+  } catch {
+    return null;
+  }
+}
+
+function normalizePath(u: URL): string {
+  // 去掉 trailing slash，统一小写
+  let p = u.pathname.toLowerCase();
+  if (p.length > 1 && p.endsWith("/")) p = p.slice(0, -1);
+  return p || "/";
+}

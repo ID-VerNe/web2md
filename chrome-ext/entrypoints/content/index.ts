@@ -31,6 +31,33 @@ export default defineContentScript({
               return;
             }
 
+            // 实际 URL 校验：SO 等站点会用 history.replaceState 在 JS 层
+            // 把请求 URL 换成另一个问题（/76161046 → /76152978），HTTP 层
+            // 无重定向，SW 侧 chrome.tabs.get 读到的 tab.url 仍是原 URL。
+            // 这里用 window.location（replaceState 后真实变化）判断。
+            // 命中站点（stackexchange）只比较 pathname 的问题 ID 段；
+            // 其他页面路径级比较已经过 waitForContent 验证，跳过。
+            const expectedUrl = message.expectedUrl;
+            const host = url.split("/")[2]?.toLowerCase() || "";
+            const isSE = host.includes("stackoverflow")
+              || host.includes("stackexchange")
+              || host.includes("serverfault")
+              || host.includes("superuser")
+              || host.includes("askubuntu")
+              || host.includes("mathoverflow");
+            if (expectedUrl && isSE) {
+              const expId = expectedUrl.match(/\/questions\/(\d+)/)?.[1];
+              const curId = url.match(/\/questions\/(\d+)/)?.[1];
+              if (expId && curId && expId !== curId) {
+                console.log(
+                  "web2md: redirected, skipping extract",
+                  { expected: expectedUrl, actual: url }
+                );
+                sendResponse({ markdown: "", source: "redirected" });
+                return;
+              }
+            }
+
             const extractor = match(url);
             if (!extractor) {
               // 理论上不会走到这里（通用提取器永远匹配），防御兜底
