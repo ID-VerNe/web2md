@@ -14,6 +14,11 @@ export default defineContentScript({
         _sender: chrome.runtime.MessageSender,
         sendResponse: (response?: any) => void
       ) => {
+        if (message.type === "web2md_ping") {
+          sendResponse({ pong: true });
+          return;
+        }
+
         if (message.type === "web2md_extract") {
           const contentMode = message.contentMode || "article";
           const url = window.location.href;

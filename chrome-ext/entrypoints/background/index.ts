@@ -172,6 +172,19 @@ export default defineBackground(() => {
 
   // ── 任务执行 ────────────────────────────────────
 
+  // 验证标签页中 content script 是否存活。
+  // 扩展重载后，已打开的标签页中的 content script 不会被重新注入，
+  // 此时 matchUrl 仍可能匹配到旧标签页。如果 CS 无响应，视为不匹配，
+  // 由调用方走 openAndExtractTab 开新标签页。
+  async function isContentScriptAlive(tabId: number): Promise<boolean> {
+    try {
+      const response = await chrome.tabs.sendMessage(tabId, { type: "web2md_ping" });
+      return response?.pong === true;
+    } catch {
+      return false;
+    }
+  }
+
   // 无匹配标签页时，开一个后台隐藏标签页抓取。
   // 配合 storage.session 记录已开 tabId，SW 重启时清理孤儿标签。
   // 插件在线 + 无匹配 → 这条路；插件离线 → MCP 端超时后走 HTTP fallback。
@@ -486,6 +499,19 @@ export default defineBackground(() => {
     if (await isBlacklisted(tab.url)) {
       console.log("web2md: blacklisted, task failed", taskId, tab.url);
       await reportResult(taskId, null, "failed");
+      return;
+    }
+
+    // CS 存活性验证：扩展重载后旧标签页的 CS 不会被重新注入，
+    // 匹配到但 CS 不通 → 视为不匹配，走 openAndExtractTab 开新标签页。
+    if (!(await isContentScriptAlive(tab.id))) {
+      console.log("web2md: stale tab (CS not alive), falling back to openAndExtractTab", { taskId, tabId: tab.id });
+      const url = params?.url;
+      if (url) {
+        await openAndExtractTab(url, taskId);
+      } else {
+        await reportResult(taskId, null, "failed");
+      }
       return;
     }
 
