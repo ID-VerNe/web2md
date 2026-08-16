@@ -43,11 +43,17 @@ cloneNode(true) 不克隆 shadowRoot，导致基于 querySelector 的提取
 function flattenShadowDom(originalDoc: Document, clonedDoc: Document): void {
   const walk = (original: Element, cloned: Element): void => {
     if (original.shadowRoot) {
-      const wrapper = clonedDoc.createElement("div");
-      wrapper.dataset.web2mdShadow = "true";
-      const shadowClone = original.shadowRoot.cloneNode(true) as ShadowRoot;
-      while (shadowClone.firstChild) wrapper.appendChild(shadowClone.firstChild);
-      cloned.appendChild(wrapper);
+      // 某些 ShadowRoot 在隐藏标签页/特定时机不可克隆（NotSupportedError）。
+      // 单个 shadowRoot 克隆失败不应让整个提取失败 → 跳过它。
+      try {
+        const wrapper = clonedDoc.createElement("div");
+        wrapper.dataset.web2mdShadow = "true";
+        const shadowClone = original.shadowRoot.cloneNode(true) as ShadowRoot;
+        while (shadowClone.firstChild) wrapper.appendChild(shadowClone.firstChild);
+        cloned.appendChild(wrapper);
+      } catch {
+        // 跳过不可克隆的 shadowRoot
+      }
     }
 
     const origLen = original.children.length;
@@ -58,7 +64,12 @@ function flattenShadowDom(originalDoc: Document, clonedDoc: Document): void {
     }
   };
 
-  walk(originalDoc.documentElement, clonedDoc.documentElement);
+  // 整棵树遍历的兜底：根节点异常时不要让 domToMarkdown 整体失败
+  try {
+    walk(originalDoc.documentElement, clonedDoc.documentElement);
+  } catch {
+    // 跳过整个 shadow 展平（极少见）
+  }
 }
 
 /**
@@ -96,6 +107,15 @@ export async function domToMarkdown(
         : {};
 
       let result = converter(workingDoc, opts);
+
+      // extractMainContent 返回空 → 降级为全页模式。
+      // 库的 findMainContent 对无 <main>/<article>/<section>/<p> 的
+      // 页面（如 HN 的 <table> 布局、GitHub 的 SPA 壳）可能返回空。
+      // removeNoise 已先跑过，降级后结果仍是去噪后的完整页面。
+      if (isArticle && (!result || !result.trim())) {
+        result = converter(workingDoc, { ...opts, extractMainContent: false });
+      }
+
       result = result.replace(/\n{4,}/g, "\n\n\n").trim();
       return result;
     }
