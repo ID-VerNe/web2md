@@ -3,6 +3,7 @@
 
 import { register } from "./registry";
 import { xhsExtractor } from "./xhs";
+import { xAiExtractor } from "./x-ai";
 import { xExtractor } from "./x";
 import { hnExtractor } from "./hn";
 import { wikipediaExtractor } from "./wikipedia";
@@ -16,6 +17,7 @@ import { genericExtractor } from "./generic";
 
 export function registerAll(): void {
   register(xhsExtractor);
+  register(xAiExtractor); // 必须在 xExtractor 之前：x.ts 的 match 会吞掉 /i/grok URL
   register(xExtractor);
   register(hnExtractor);
   register(wikipediaExtractor);

@@ -303,6 +303,13 @@ export default defineBackground(() => {
       if (host.includes("npmjs.com")) return ["#readme"];
       if (host.includes("stackoverflow") || host.includes("stackexchange") || host.includes("serverfault") || host.includes("superuser") || host.includes("askubuntu") || host.includes("mathoverflow")) return ["#question"];
       if (host.includes("google.com") && new URL(url).searchParams.get("udm") === "50") return ['[data-scope-id="turn"][data-complete="true"]:has(button[aria-label="复制文字"])'];
+      if ((host.includes("x.com") || host.includes("twitter.com")) && new URL(url).pathname.startsWith("/i/grok")) {
+        // Grok 对话页：隐藏后台页对话 DOM 是惰性渲染的，文档 complete 后
+        // 还要几秒才注入。导航壳的 main/body 文本恒 >200 字符（导航是
+        // 渲染进 DOM 的，不是懒加载），通用选择器会立即放行导致提取早于
+        // 对话渲染。等真正的内容要素——"复制文本"按钮出现才算就绪。
+        return ['button[aria-label="复制文本"], button[aria-label="Copy text"]'];
+      }
     } catch {
       return [];
     }
@@ -327,7 +334,13 @@ export default defineBackground(() => {
           func: (sels: string[]) => {
             for (const sel of sels) {
               const el = document.querySelector(sel);
-              if (el && el.textContent && el.textContent.trim().length > 200) {
+              if (!el) continue;
+              const txt = (el.textContent || "").trim();
+              if (txt.length > 200) return true;
+              // 站点专用 icon-only 内容要素（如 Grok 的"复制文本"按钮）：
+              // 文字在 aria-label，textContent 为空，存在即代表对话已渲染。
+              // 其余站点的专用容器都是文本富的正文元素，走上面的 >200 分支。
+              if (el.tagName === "BUTTON" && (el.getAttribute("aria-label") || "").length > 0) {
                 return true;
               }
             }
