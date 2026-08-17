@@ -37,6 +37,8 @@ class TaskQueue:
                     title=item.get("title"),
                     url=item.get("url"),
                     match_mode=item.get("match_mode", "auto"),
+                    task_type=item.get("task_type", "extract"),
+                    prompt=item.get("prompt"),
                 )
                 self._tasks[task.task_id] = task
                 self._pending.append(task.task_id)

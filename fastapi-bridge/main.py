@@ -36,6 +36,8 @@ class TaskItem(BaseModel):
     title: str | None = None
     url: str | None = None
     match_mode: str = "auto"
+    task_type: str = "extract"
+    prompt: str | None = None
 
 
 class CreateTasksRequest(BaseModel):
@@ -104,11 +106,12 @@ def poll_task():
         return PollResponse()
     return PollResponse(
         task_id=task.task_id,
-        type="extract",
+        type=task.task_type.value,
         params={
             "title": task.title,
             "url": task.url,
             "match_mode": task.match_mode.value,
+            "prompt": task.prompt,
         },
     )
 

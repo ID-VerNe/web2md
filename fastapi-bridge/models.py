@@ -17,6 +17,12 @@ class TaskStatus(str, enum.Enum):
     FAILED = "failed"         # 处理失败
 
 
+class TaskType(str, enum.Enum):
+    """任务类型。"""
+    EXTRACT = "extract"       # 提取页面内容
+    GROK_ASK = "grok_ask"     # 向 Grok AI 提问
+
+
 class MatchMode(str, enum.Enum):
     """标签页匹配模式。"""
     TITLE = "title"   # 按标题匹配
@@ -34,8 +40,8 @@ class Task:
     """内存中的一个任务。"""
 
     __slots__ = (
-        "task_id", "title", "url", "match_mode",
-        "status", "markdown", "created_at", "completed_at",
+        "task_id", "title", "url", "match_mode", "task_type",
+        "prompt", "status", "markdown", "created_at", "completed_at",
     )
 
     def __init__(
@@ -43,11 +49,15 @@ class Task:
         title: str | None = None,
         url: str | None = None,
         match_mode: str = "auto",
+        task_type: str = "extract",
+        prompt: str | None = None,
     ) -> None:
         self.task_id = uuid.uuid4().hex[:12]
         self.title = title
         self.url = url
         self.match_mode = MatchMode(match_mode)
+        self.task_type = TaskType(task_type)
+        self.prompt = prompt
         self.status = TaskStatus.PENDING
         self.markdown: str | None = None
         self.created_at = time.time()
@@ -60,6 +70,7 @@ class Task:
             "title": self.title,
             "url": self.url,
             "match_mode": self.match_mode.value,
+            "task_type": self.task_type.value,
             "status": self.status.value,
             "created_at": self.created_at,
             "completed_at": self.completed_at,

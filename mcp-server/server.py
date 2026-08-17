@@ -130,6 +130,9 @@ async def web2md_extract(
                - title: 页面标题（用于匹配标签页）
                - url: 页面 URL
                - match_mode: "title" | "url" | "auto"（默认 auto）
+               - task_type: "extract"（默认，提取页面）| "grok_ask"（向
+                 Grok AI 提问；需要 prompt 字段，url 可省略）
+               - prompt: task_type="grok_ask" 时的问题文本
         content_mode: "article"（仅正文）或 "full"（完整页面）
         output_mode: "separate"（每个任务独立文件）或 "merged"（合并文件）
         port: FastAPI 端口（默认 8765）
@@ -177,6 +180,12 @@ async def web2md_extract(
             # 不到标签页时报 failed 并直接硬失败，绕过了 fallback。
             if not (result and result["status"] == "done"
                     and result.get("markdown")):
+                if tasks[task_id_to_idx(task_ids, task_id)].get("task_type") == "grok_ask":
+                    # grok_ask 无 HTTP 等价物（需要浏览器登录态 + 交互），
+                    # fallback 无法兜底 → 正常运行失败
+                    print("[web2md-diag] grok_ask failed, no fallback available", task_id)
+                    file_paths.append(f"# {task_id}: grok_ask failed (extension busy/offline)")
+                    continue
                 result = await _fallback_and_complete(
                     client, task_id, tasks, task_id_to_idx(task_ids, task_id),
                     content_mode)
