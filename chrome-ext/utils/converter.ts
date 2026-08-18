@@ -72,6 +72,9 @@ function flattenShadowDom(originalDoc: Document, clonedDoc: Document): void {
   }
 }
 
+/** 从 Markdown 文本中检测并清除 JS/CSS 代码行。 */
+import { cleanCodeLines } from "./clean-code-lines";
+
 /**
  * 将 DOM 转为语义化 Markdown。
  * 专为 LLM 阅读优化。
@@ -80,6 +83,7 @@ function flattenShadowDom(originalDoc: Document, clonedDoc: Document): void {
  * 1. 先移除页面噪声元素
  * 2. 用库的 extractMainContent 提取正文容器
  * 3. 自动清理多余空行
+ * 4. 清除混入的 JS/CSS 代码行
  */
 export async function domToMarkdown(
   doc: Document = document,
@@ -116,6 +120,7 @@ export async function domToMarkdown(
         result = converter(workingDoc, { ...opts, extractMainContent: false });
       }
 
+      result = cleanCodeLines(result);
       result = result.replace(/\n{4,}/g, "\n\n\n").trim();
       return result;
     }
@@ -123,7 +128,8 @@ export async function domToMarkdown(
     // fallback 到纯文本
   }
 
-  return workingDoc.body?.innerText?.trim() || "";
+  const text = workingDoc.body?.innerText?.trim() || "";
+  return cleanCodeLines(text);
 }
 
 // ── DOM 结构分析 ──────────────────────────────────

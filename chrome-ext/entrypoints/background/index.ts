@@ -13,6 +13,7 @@ import { matchTab, isContentScriptAlive } from "./tab-matcher";
 import { extractFromTab } from "./extract-from-tab";
 import { openAndExtractTab } from "./open-and-extract-tab";
 import { openGrokAndAsk } from "./grok-task";
+import { openGoogleAiAsk } from "./google-ai-task";
 import { reportResult } from "./report-result";
 import {
   FASTAPI_HOST,
@@ -38,12 +39,31 @@ export default defineBackground(() => {
   });
 
   // 包装 reportResult 闭包，注入 port 参数
-  const rr = (taskId: string, markdown: string | null, status = "done") =>
-    reportResult(FASTAPI_HOST, port, taskId, markdown, status);
+  const rr = (taskId: string, markdown: string | null, status = "done", tabUrl?: string) =>
+    reportResult(FASTAPI_HOST, port, taskId, markdown, status, tabUrl);
 
   // 包装 openAndExtractTab 闭包
   const oet = (url: string, taskId: string) =>
     openAndExtractTab(url, taskId, rr);
+
+  // 确保目标标签页已注入 content script。
+  // 扩展在 chrome://extensions 重载后，既有标签页不会自动重注入静态
+  // content script，此时 sendMessage 会报 "Receiving end does not exist"。
+  // 先 ping 探测，未存活则用 scripting.executeScript 按需注入。
+  async function ensureContentScript(tabId: number): Promise<boolean> {
+    if (await isContentScriptAlive(tabId)) return true;
+    try {
+      await chrome.scripting.executeScript({
+        target: { tabId },
+        files: ["content-scripts/content.js"],
+      });
+      console.log("web2md: injected content script on demand, tab", tabId);
+      return true;
+    } catch (err) {
+      console.error("web2md: inject content script failed", err);
+      return false;
+    }
+  }
 
   // ── 右键菜单 ──────────────────────────────────────
 
@@ -61,7 +81,13 @@ export default defineBackground(() => {
   });
 
   // 健康检查 alarm：每次 SW 启动都创建（幂等）。
-  chrome.alarms.create(HEALTH_ALARM, { periodInMinutes: 0.25 }); // 15s
+  chrome.alarms.create(HEALTH_ALARM, { periodInMinutes: 0.05 }); // 3s
+
+  // SW 启动时立即执行一次健康检查，不等第一个 alarm 触发。
+  // 解决首次使用的冷启动延迟：Service Worker 冷启动后最快 3s 才触发
+  // alarm，但此时 MCP 可能已经在等任务完成。立即触发健康检查可以
+  // 让扩展在首次任务创建前就完成 FastAPI 连接检测，进入轮询状态。
+  handleHealthCheck();
 
   // SW 重启时清理孤儿标签
   chrome.runtime.onStartup?.addListener(cleanupOrphanTabs);
@@ -72,6 +98,7 @@ export default defineBackground(() => {
         console.log("web2md: blacklisted, skip copy", tab.url);
         return;
       }
+      if (!(await ensureContentScript(tab.id))) return;
       chrome.tabs.sendMessage(
         tab.id,
         { type: "web2md_extract", contentMode: "article" },
@@ -90,6 +117,7 @@ export default defineBackground(() => {
         console.log("web2md: blacklisted, skip send", tab.url);
         return;
       }
+      if (!(await ensureContentScript(tab.id))) return;
       chrome.tabs.sendMessage(
         tab.id,
         { type: "web2md_extract", contentMode: "article" },
@@ -180,6 +208,12 @@ export default defineBackground(() => {
     params: any,
     taskType?: string
   ) {
+    // google_ai_ask 任务：向 Google AI Mode 提问（多轮追问）
+    if (taskType === "google_ai_ask" || params?.task_type === "google_ai_ask") {
+      await openGoogleAiAsk(taskId, params, rr);
+      return;
+    }
+
     // grok_ask 任务：向 Grok AI 提问
     if (taskType === "grok_ask" || params?.task_type === "grok_ask") {
       await openGrokAndAsk(taskId, params, rr);

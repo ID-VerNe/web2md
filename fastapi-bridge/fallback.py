@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import ipaddress
+import re
 import socket
 import sys
 from pathlib import Path
@@ -152,6 +153,99 @@ def html_to_markdown(html: str) -> str:
     return h.handle(html)
 
 
+# ── 代码行清洗（JS/CSS 检测）──────────────────────────────────────────
+
+# 按行特征检测 JS/CSS 代码的规则。命中任一即判定为代码行，从输出中删除。
+CODE_PATTERNS = [
+    # 行首 JS 声明/控制流
+    r"^(function\b|function\s*\w*\s*\()",
+    r"^(var\s+|let\s+|const\s+)",
+    r"^(if\s*\(|for\s*\(|while\s*\(|do\s*\{|switch\s*\()",
+    r"^(return\s|throw\s|try\s*\{|catch\s*\(|finally\s*\{)",
+    r"^(async\s+function|async\s+\(|await\s+)",
+    r"^(class\s+\w+|new\s+\w+\s*\(|import\s+|export\s+)",
+    r"^(typeof\s+|delete\s+|void\s+|yield\s+)",
+    # 行首 JS API / DOM 操作
+    r"^(document\.|window\.|globalThis\.|self\.|console\.|location\.|history\.)",
+    r"^(alert\(|confirm\(|prompt\(|fetch\(|setTimeout\(|setInterval\(|clearTimeout\(|clearInterval\()",
+    r"^(JSON\.|Math\.|Date\.|Promise\.|Array\.|Object\.|String\.|Number\.|Boolean\.|RegExp\.|Error\.|Map\.|Set\.|WeakMap\.|WeakSet\.|Symbol\.)",
+    r"^httpRequest\s*=",
+    r"^httpRequest\.[a-zA-Z]+\(",
+    # jQuery
+    r"^(\$\(|jQuery\(|\$\.(get|post|ajax|on|each|map|extend|when|Deferred)\(|_\$)",
+    # 行中 JS 特征
+    r"(addEventListener\(|removeEventListener\(|querySelector\(|querySelectorAll\(|getElementById\(|getElementsBy|createElement\(|appendChild\(|insertBefore\(|setAttribute\(|getAttribute\()",
+    r"(innerHTML\s*=|outerHTML\s*=|textContent\s*=|innerText\s*=)",
+    r"(\.submit\(\)|\.click\(\)|\.focus\(\)|\.blur\(\)|\.preventDefault\(\)|\.stopPropagation\(\))",
+    r"(\$\s*\(|\.css\s*\(|\.animate\s*\(|\.slide|\.fade|\.ajax)",
+    r"(XMLHttpRequest|ActiveXObject|FormData|FileReader|Blob|ArrayBuffer)",
+    r"(_satellite\[|_satellite\.|adobeDataLayer|dataLayer\.push)",
+    # CSS 选择器规则
+    r"^[.#][-\w]+\s*\{",
+    r"^[a-zA-Z][-\w]*\s*\{[^}]*$",
+    r"^\s*\{[^}]*\}$",
+    # CSS 声明行（如 line-height: 1.5;）
+    r"^[a-zA-Z-]+\s*:\s*[^;{}]+;*$",
+    # 注释行（// ... 或 /* ... */）
+    r"^\s*//.*$",
+    r"^\s*/\*",
+    r"^\s*\*/",
+    # 独立括号/闭包残行：} }); })(); }, 10); (function(){...})() 等
+    r"^\s*[}\])]\s*[;,\)\d\s]*\)*\s*;*\s*$",
+    r"^\s*\}\)\s*\(\s*\)\s*;?\s*$",
+    r"^\s*\}\s*\)\s*;?\s*$",
+    # 函数调用语句（以 ; 结尾的调用）
+    r"^[a-z_]\w*\s*\([^)]*\)\s*;\s*$",
+    # 行中 CSS 选择器：#id{...} 或 .class{...}（userscript 等注入的 CSS 文本）
+    r"#[a-zA-Z][-\w]*\{",
+    r"\.[a-zA-Z][-\w]*\{",
+    # CSS 特有属性（几乎不会出现在自然语言中）
+    r"z-index:\s*\d+",
+    r"box-sizing:\s*border-box",
+    r"-webkit-",
+    r"-moz-",
+]
+
+# 预编译正则，加快批量检测
+COMPILED_PATTERNS = [re.compile(p) for p in CODE_PATTERNS]
+
+
+def _is_code_line(line: str) -> bool:
+    """判断单行文本是否为 JS/CSS 代码。"""
+    t = line.strip()
+    if not t:
+        return False
+    # 极短行只检查括号/分号行
+    if len(t) < 3:
+        return bool(re.match(r"^[{}();)\]\[\]]+$", t))
+    # 跳过纯数字行、纯 URL 行
+    if re.fullmatch(r"[\d\s,.!?]+", t):
+        return False
+    if re.match(r"^https?://\S+$", t):
+        return False
+    for pat in COMPILED_PATTERNS:
+        if pat.search(t):
+            return True
+    # 高密度代码符号检测：{ } ( ) ; 占比超过字母数的 25%
+    code_chars = len(re.findall(r"[{}();]", t))
+    alpha_chars = len(re.findall(r"[a-zA-Z]", t))
+    if code_chars >= 2 and alpha_chars > 0 and code_chars > alpha_chars * 0.25:
+        return True
+    # 长代码行、行尾分号
+    if len(t) > 30 and t.endswith(";") and re.search(r"[{}()]", t):
+        return True
+    return False
+
+
+def clean_code_lines(text: str) -> str:
+    """从 Markdown 文本中移除所有看起来像 JS/CSS 代码的行。"""
+    if not text:
+        return text
+    lines = text.split("\n")
+    cleaned = [ln for ln in lines if not _is_code_line(ln)]
+    return re.sub(r"\n{3,}", "\n\n", "\n".join(cleaned)).strip()
+
+
 def extract_full_page(html: str, title: str | None = None) -> str:
     """将整个 HTML 转为 Markdown（含导航等）。"""
     return html_to_markdown(html)
@@ -198,6 +292,9 @@ def fallback_extract(
                 markdown = extract_full_page(html, title)
         else:
             markdown = extract_full_page(html, title)
+
+        # 清除混入的 JS/CSS 代码行
+        markdown = clean_code_lines(markdown)
 
         return {"success": True, "markdown": markdown, "title": title,
                 "error": None}

@@ -38,6 +38,7 @@ class TaskItem(BaseModel):
     match_mode: str = "auto"
     task_type: str = "extract"
     prompt: str | None = None
+    tab_url: str | None = None  # 会话参数 URL（用于 google_ai_ask 追问复用）
 
 
 class CreateTasksRequest(BaseModel):
@@ -63,6 +64,7 @@ class ResultResponse(BaseModel):
     markdown: str | None = None
     title: str | None = None
     url: str | None = None
+    tab_url: str | None = None  # 扩展实际打开的标签 URL（含会话参数）
 
 
 class HealthResponse(BaseModel):
@@ -112,6 +114,7 @@ def poll_task():
             "url": task.url,
             "match_mode": task.match_mode.value,
             "prompt": task.prompt,
+            "tab_url": task.tab_url,
         },
     )
 
@@ -119,12 +122,13 @@ def poll_task():
 class WriteResultRequest(BaseModel):
     markdown: str
     status: str = "done"
+    url: str | None = None  # 实际 tab URL（含 mstk 等会话参数）
 
 
 @app.post("/api/tasks/{task_id}/result", response_model=dict)
 def write_result(task_id: str, req: WriteResultRequest):
     """Chrome 扩展回写处理结果。"""
-    ok = queue.complete_task(task_id, req.markdown, req.status)
+    ok = queue.complete_task(task_id, req.markdown, req.status, url=req.url)
     if not ok:
         raise HTTPException(status_code=404, detail="task not found")
     return {"status": "ok", "task_id": task_id}
@@ -141,6 +145,7 @@ def get_result(task_id: str):
         markdown=task.markdown,
         title=task.title,
         url=task.url,
+        tab_url=task.tab_url,
     )
 
 

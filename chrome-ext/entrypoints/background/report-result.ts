@@ -7,7 +7,8 @@ export async function reportResult(
   port: number,
   taskId: string,
   markdown: string | null,
-  status = "done"
+  status = "done",
+  tabUrl?: string
 ): Promise<void> {
   try {
     const resp = await fetch(
@@ -18,6 +19,7 @@ export async function reportResult(
         body: JSON.stringify({
           markdown: markdown ?? "",
           status: markdown ? status : "failed",
+          url: tabUrl,
         }),
       }
     );

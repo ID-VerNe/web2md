@@ -21,6 +21,7 @@ class TaskType(str, enum.Enum):
     """任务类型。"""
     EXTRACT = "extract"       # 提取页面内容
     GROK_ASK = "grok_ask"     # 向 Grok AI 提问
+    GOOGLE_AI_ASK = "google_ai_ask"  # 向 Google AI Mode 提问（追问）
 
 
 class MatchMode(str, enum.Enum):
@@ -41,7 +42,7 @@ class Task:
 
     __slots__ = (
         "task_id", "title", "url", "match_mode", "task_type",
-        "prompt", "status", "markdown", "created_at", "completed_at",
+        "prompt", "status", "markdown", "tab_url", "created_at", "completed_at",
     )
 
     def __init__(
@@ -51,6 +52,7 @@ class Task:
         match_mode: str = "auto",
         task_type: str = "extract",
         prompt: str | None = None,
+        tab_url: str | None = None,
     ) -> None:
         self.task_id = uuid.uuid4().hex[:12]
         self.title = title
@@ -58,6 +60,7 @@ class Task:
         self.match_mode = MatchMode(match_mode)
         self.task_type = TaskType(task_type)
         self.prompt = prompt
+        self.tab_url = tab_url
         self.status = TaskStatus.PENDING
         self.markdown: str | None = None
         self.created_at = time.time()
@@ -72,6 +75,7 @@ class Task:
             "match_mode": self.match_mode.value,
             "task_type": self.task_type.value,
             "status": self.status.value,
+            "tab_url": self.tab_url,
             "created_at": self.created_at,
             "completed_at": self.completed_at,
         }

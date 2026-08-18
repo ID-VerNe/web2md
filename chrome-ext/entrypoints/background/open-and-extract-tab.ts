@@ -19,7 +19,8 @@ export async function openAndExtractTab(
   reportResult: (
     taskId: string,
     markdown: string | null,
-    status?: string
+    status?: string,
+    tabUrl?: string
   ) => Promise<void>
 ): Promise<void> {
   // 1. URL 安全校验（SSRF 防护，与 fallback.py validate_url 同口径）
@@ -50,7 +51,7 @@ export async function openAndExtractTab(
     if (!tabId) throw new Error("no tab id");
 
     // 4. 孤儿标签记录（SW 死掉时，下次启动能清理）
-    await trackOrbanTab(tabId, taskId, url);
+    await trackOrphanTab(tabId, taskId, url);
 
     // 5. 等加载完成
     await waitTabComplete(tabId, 2000);
@@ -73,8 +74,11 @@ export async function openAndExtractTab(
     // 6-8. 提取（content script 消息 + 兜底注入）
     const markdown = await extractFromTab(tabId, url);
 
-    // 11. 回写结果
-    await reportResult(taskId, markdown);
+    // 获取实际 tab URL（含会话参数如 mstk），复用 #5 的 finalTab
+    const tabUrl = finalTab?.url || url;
+
+    // 11. 回写结果（带实际 tab URL，供后续 google_ai_ask 复用）
+    await reportResult(taskId, markdown, "done", tabUrl);
   } catch (err) {
     console.error("web2md: openAndExtractTab failed", taskId, err);
     await reportResult(taskId, null, "failed");

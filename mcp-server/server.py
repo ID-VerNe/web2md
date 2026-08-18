@@ -99,6 +99,7 @@ def _write_result(
     title: str | None,
     markdown: str,
     output_dir: Path,
+    tab_url: str | None = None,
 ) -> Path:
     """将 Markdown 写入输出目录。"""
     ts = time.strftime("%Y%m%d-%H%M%S")
@@ -108,8 +109,12 @@ def _write_result(
             c if c.isalnum() or c in " _-" else "_" for c in title)[:60]
     filename = f"{safe_title}-{ts}.md"
     filepath = output_dir / filename
-    print(f"[web2md-diag] _write_result: markdown len={len(markdown)}, title={title!r}, path={filepath}")  # noqa: T201
-    filepath.write_text(markdown, encoding="utf-8")
+    # 在文件首行写入 tab_url 注释（供多轮追问复用）
+    content = markdown
+    if tab_url:
+        content = f"<!-- web2md-url: {tab_url} -->\n\n{content}"
+    print(f"[web2md-diag] _write_result: markdown len={len(markdown)}, title={title!r}, tab_url={tab_url!r}, path={filepath}")  # noqa: T201
+    filepath.write_text(content, encoding="utf-8")
     return filepath
 
 
@@ -131,7 +136,9 @@ async def web2md_extract(
                - url: 页面 URL
                - match_mode: "title" | "url" | "auto"（默认 auto）
                - task_type: "extract"（默认，提取页面）| "grok_ask"（向
-                 Grok AI 提问；需要 prompt 字段，url 可省略）
+                 Grok AI 提问；需要 prompt 字段，url 可省略）|
+                 "google_ai_ask"（向 Google AI Mode 提问，追问；
+                 需要 prompt 字段 + url 或 tab_url）
                - prompt: task_type="grok_ask" 时的问题文本
         content_mode: "article"（仅正文）或 "full"（完整页面）
         output_mode: "separate"（每个任务独立文件）或 "merged"（合并文件）
@@ -168,11 +175,14 @@ async def web2md_extract(
             result = await _await_task(client, task_id, grace=5.0)
 
             # Phase 2：5s 内扩展没 poll（None）或 poll 了但没出结果
-            # （PROCESSING）→ 继续等最多 30s。扩展串行化后可能忙，
-            # 5s 不够等它 poll 到新任务。
+            # （PROCESSING）→ 继续等。
+            # google_ai_ask / grok_ask 需要打开标签页 + 页面交互 +
+            # AI 生成，耗时较长，给 90s；其余任务给 30s。
+            task_type = tasks[task_id_to_idx(task_ids, task_id)].get("task_type", "")
+            phase2_grace = 90.0 if task_type in ("grok_ask", "google_ai_ask") else 30.0
             if (result is None
                     or (result and result["status"] not in ("done", "failed"))):
-                result = await _await_task(client, task_id, grace=30.0)
+                result = await _await_task(client, task_id, grace=phase2_grace)
 
             # 只有扩展明确处理成功（done + 有 markdown）才算完成；
             # 否则（PENDING 超时 / failed / 空 markdown）都走 fallback
@@ -180,11 +190,12 @@ async def web2md_extract(
             # 不到标签页时报 failed 并直接硬失败，绕过了 fallback。
             if not (result and result["status"] == "done"
                     and result.get("markdown")):
-                if tasks[task_id_to_idx(task_ids, task_id)].get("task_type") == "grok_ask":
-                    # grok_ask 无 HTTP 等价物（需要浏览器登录态 + 交互），
-                    # fallback 无法兜底 → 正常运行失败
-                    print("[web2md-diag] grok_ask failed, no fallback available", task_id)
-                    file_paths.append(f"# {task_id}: grok_ask failed (extension busy/offline)")
+                if tasks[task_id_to_idx(task_ids, task_id)].get("task_type") in ("grok_ask", "google_ai_ask"):
+                    # grok_ask / google_ai_ask 无 HTTP 等价物（需要浏览器
+                    # 登录态 + 交互），fallback 无法兜底 → 正常运行失败
+                    task_type = tasks[task_id_to_idx(task_ids, task_id)].get("task_type", "unknown")
+                    print(f"[web2md-diag] {task_type} failed, no fallback available", task_id)
+                    file_paths.append(f"# {task_id}: {task_type} failed (extension busy/offline)")
                     continue
                 result = await _fallback_and_complete(
                     client, task_id, tasks, task_id_to_idx(task_ids, task_id),
@@ -192,7 +203,8 @@ async def web2md_extract(
 
             if result and result["status"] == "done" and result.get("markdown"):
                 fp = _write_result(
-                    result.get("title"), result["markdown"], output_dir)
+                    result.get("title"), result["markdown"], output_dir,
+                    tab_url=result.get("tab_url"))
                 file_paths.append(str(fp))
             else:
                 file_paths.append(f"# {task_id}: failed or no result")

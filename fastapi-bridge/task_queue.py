@@ -39,6 +39,7 @@ class TaskQueue:
                     match_mode=item.get("match_mode", "auto"),
                     task_type=item.get("task_type", "extract"),
                     prompt=item.get("prompt"),
+                    tab_url=item.get("tab_url"),
                 )
                 self._tasks[task.task_id] = task
                 self._pending.append(task.task_id)
@@ -58,6 +59,7 @@ class TaskQueue:
 
     def complete_task(
         self, task_id: str, markdown: str, status: str = "done",
+        url: str | None = None,
     ) -> bool:
         """回写任务结果。"""
         import time
@@ -68,6 +70,8 @@ class TaskQueue:
             task.markdown = markdown
             task.status = TaskStatus(status)
             task.completed_at = time.time()
+            if url:
+                task.tab_url = url
             return True
 
     def get_result(self, task_id: str) -> Task | None:

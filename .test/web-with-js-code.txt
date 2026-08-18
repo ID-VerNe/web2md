@@ -1,0 +1,208 @@
+<iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KNPDWQF"
+height="0" width="0" style="display:none;visibility:hidden"></iframe>
+
+
+<iframe src="https://www.googletagmanager.com/ns.html?id=GTM-5HG6QW"
+height="0" width="0" style="display:none;visibility:hidden"></iframe>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+ Logged in as SiXian Yu
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Start an Application
+My Applications
+My Documents
+Resources
+My Account
+ Sign out
+
+
+function doLogout() {
+document.logoutForm.submit();
+}
+
+
+
+
+
+
+
+
+
+
+
+Your Application for PhD (Electrical & Electronic Engineering)
+
+
+window.addEventListener('error', function(e) {
+console.error('Sorry, forms are temporarily unavailable. Please check back again soon.');
+httpRequest = new XMLHttpRequest()
+httpRequest.open('POST', '/ajax_user/catchJSError.cfm?errortype=FBViewer&sourcepage=schemaform_load')
+httpRequest.send()
+});
+
+
+.SchemaForm-runtimeform__form {
+line-height: 1.5;
+}
+
+Before you start!Expression of Interest FormPERSONAL DETAILSTitle *MrFirst Name *Middle Name Family Name *Gender *MaleDate of Birth *Email *Are you currently studying at RMIT? *YesNoCountry and Region of Citizenship *CHINAWhere are you applying from? *CHINARegion *OtherAre you a permanent resident? *YesNoDo you identify as an Aboriginal and/or Torres Strait Islander? *NeitherDo you have a disability, long-term illness and/or mental health condition which may impact your studies? *YesNoEquitable Learning Services (ELS) are dedicated to providing equal opportunities for all.CONTACT DETAILSHome Country AddressCountry and Region *CHINAState/Province *GuangdongCity/Suburb *Address 1 *Address 2 Address 3 Postal Code *Mailing Address Your mailing address is where you want RMIT to send (post) documents to. Is your mailing address the same as your home country address?Mobile Phone NumberCountry Code *China (PRC) +86Mobile Number *PROGRAM SELECTIONPlease click on the ‘Select Program Options’ button below
+Select your program start date, campus, and pathway (if required)
+Click 'Save All Programs' to save your options to the form1. Course2. Pathway3. Proposed Commencement BackPhD (Electrical & Electronic Engineering) (DR220) | PhD (Electrical & Electronic Engineering) (Available from 01/01/2023)ActionLocation▲Intake▲Start▲MajorModeXCity1 March 2027 - International01-Mar-27Full TimePROGRAM & FINANCEApplication Type *Admission and ScholarshipProposed Study Load *Full timePart timeInternational applicants on a student visa are expected to enrol on a full time basis.If you are applying for a PHD program, would you consider an alternative offer for admission to a Masters by Research Program? *YesNoIf you will not be supported by an RMIT research scholarship how will you support your studies? *OtherIf you are supported by an external organisation (not an individual), such as a government agency, large organisation or overseas university you are a sponsored student. You will be required to provide a valid financial guarantee from your sponsoring organisation.Other *If you are eligible, do you wish to be considered for the following?RMIT Research Equity ScholarshipRESEARCH PROPOSALPlease either select from the available research projects for this program or if you are a sponsored applicant provide a Research Proposal and the title of the research you would like to conduct at RMIT.Research Projects
+As the program you are applying for has projects available you must apply to conduct your research through one of these projects. Please select up to three projects available for the program you have selected. Only select projects once you have read about them on the University's websiteProject Name Select...Project Name Select...Project Name Select...Applicants to the College of Science, Engineering and Health must upload a statement detailing ther interest in the nominated project(s) while applicants to the College of Design and Social Context must upload a research proposal for each project selected.  *Drop files hereOnly the following file types are accepted: .JPG, .JPEG, .PNG, .PDF.Proposed Research
+Please provide the details of your proposed research projectProposed Research Title *Research Proposal *Drop files hereOnly the following file types are accepted: .JPG, .JPEG, .PNG, .PDF.SCHOLARSHIP AND SPONSORSHIPHave you been awarded a scholarship or sponsorship?  *YesNoACADEMIC QUALIFICATIONPlease provide the details of up to five qualifications that you have completed. At least one of these qualifications should qualify you for entry into the program for which you are seeking admission.Qualification 1Level of Study
+ *4 year Bachelor DegreeCountry and Region of Institution *CHINAInstitution Name *Jinan UniversityQualification Name *Qualification Length (years) *Date Commenced
+ *September2018Completion Status *CompleteCompletion Date *July2022Was there a research component completed as part of this qualification? *YesNoDescribe the research component that was completed as part of this qualification *My thesis (93/100) developed a full-stack Grid-Source Coordination platform assessing primary frequency regulation and renewable power forecasting for grid stability. The core algorithms earned a Software Copyright (2023SR1202776).Attach the thesis/dissertation *Drop files hereOnly the following file types are accepted: .JPG, .JPEG, .PNG, .PDF.Attach transcript for qualification listed *Drop files hereOnly the following file types are accepted: .JPG, .JPEG, .PNG, .PDF.Would you like to add another qualification? *YesNoQualification 2Level of Study
+ *Master DegreeCountry and Region of Institution *HONG KONGInstitution Name *University of Hong KongQualification Name *Qualification Length (years) *Date Commenced
+ *September2025Completion Status *IncompleteWas there a research component completed as part of this qualification? *YesNoDescribe the research component that was completed as part of this qualification *My research focuses on multi-agent P2P energy trading in distribution networks. To ensure safe market clearing, I developed a differentiable power flow surrogate for fast computations and a Jacobian safety shield against voltage violations.Attach the thesis/dissertation *Drop files hereOnly the following file types are accepted: .JPG, .JPEG, .PNG, .PDF.Attach candidature for qualification listed *Drop files hereOnly the following file types are accepted: .JPG, .JPEG, .PNG, .PDF.Attach transcript for qualification listed *Drop files hereOnly the following file types are accepted: .JPG, .JPEG, .PNG, .PDF.Would you like to add another qualification? YesNoHave you commenced but not completed a Masters by Research, Professional Doctorate by Research or Doctor of Philosophy (PHD) program at another institution in the past 3 years? *YesNoSUPPORTING DOCUMENTSAttach CV (Please include research experience, publications, awards/prizes and current English language test results) *Drop files hereOnly the following file types are accepted: .JPG, .JPEG, .PNG, .PDF.If applicable, please upload your folio
+Applicants to the School of Art must provide a folio of selected creative works, supportive to your application. Eight to ten examples of works are recommended with a list of works including details of title, year, media, dimensions, duration (for sound and moving image works) and photograph credit (if applicable). Your folio may be submitted as a compiled PDF document, or via a web file-sharing application such as WeTransfer, Dropbox, or password-protected Vimeo. Details of how to access your online folio (URL) must be included in your list of works submitted electronically with your application. Drop files hereOnly the following file types are accepted: .JPG, .JPEG, .PNG, .PDF.Add another attachment? YesNoIf your folio is available to be viewed on a website, please provide the URL All applicants to the School of Architecture and Design are required to upload a critical reflection. Please upload either:
+Approximately 1000 words of your own written reflections on an existing practice-based project of your own, with 5-7 relevant images, drawings or other visual material, if you are seeking to undertake practice research, OR 
+A 1000-3000 word sample of writing, for non-practice led research applicants.Please upload here Drop files hereOnly the following file types are accepted: .JPG, .JPEG, .PNG, .PDF.APPLICANT DECLARATIONI declare that:
+The information supplied as part of my submission is true and complete
+I have read and understood RMIT University's privacy statement and accept its conditions
+I consent to receiving electronic communication from the University and third parties for the purpose of assisting with my future enrolment at RMIT
+I understand and accept that:
+I will be bound by the statutes, regulations, standards of conduct and policies of the University as amended from time to time
+It is my responsibility to provide all relevant and required supporting documents including documentary evidence of my qualifications
+All documents submitted in support of this application become the property of RMIT and will not be returned to me
+The provision of incomplete, inaccurate or fraudulent information with this application or the withholding of relevant information may result in the withdrawal by the University of any offer, and that this withdrawal may take place at any stage during the course of study
+RMIT will communicate with me using the email provided
+It may be necessary for third parties to communicate with me for the purpose of assisting my future enrolment at RMIT
+RMIT reserves the right to discontinue or alter any program, course/subject, fee, admissions requirement, staffing or other arrangement without prior notice
+
+I authorise RMIT University to:
+Request and obtain further information from any educational institution or employer which may be required to confirm or clarify my suitability and eligibility for entry to a research program
+Provide information to government, educational, health and other relevant institutions, in the processing of, or in conjunction with my application. I understand that information about me can be disclosed without my consent where authorised or required by lawI understand and accept the above conditions.*BackSaveSubmit
+
+
+
+
+
+
+Technical support    Contact us    Site map
+
+
+
+
+
+
+Connect with us
+
+
+
+
+
+
+
+
+
+
+
+
+
+Copyright © 2019 RMIT University | Terms | Privacy | Accessibility | Website feedback | ABN 49 781 030 034   CRICOS provider number: 00122A | RTO Code: 3046 | Open Universitites Australia | RMIT Training Pty Ltd, trading as RMIT University Pathways (RMIT UP) | CRICOS Provider number: 01912G
+
+
+
+
+
+Powered by Flywire   
+Terms of Use   
+Privacy Policy
+
+
+
+
+// On dropdown open
+$(document).on('shown.bs.dropdown', function(event) {
+var dropdown = $(event.target);
+// Set aria-expanded to true
+dropdown.find('.dropdown-menu').attr('aria-expanded', true);
+// Set focus on the first link in the dropdown
+setTimeout(function() {
+dropdown.find('.dropdown-menu li:first-child a').focus();
+}, 10);
+});
+// On dropdown close
+$(document).on('hidden.bs.dropdown', function(event) {
+var dropdown = $(event.target);
+// Set aria-expanded to false 
+dropdown.find('.dropdown-menu').attr('aria-expanded', false);
+// Set focus back to dropdown toggle
+dropdown.find('.dropdown-toggle').focus();
+});
+
+
+function checkCurrentSession() {
+$.post( "/ajax_user/checkSessionStudent.cfm", function( data ) {
+if(data.SUCCESS == 0) {
+//alert("Your session is no longer valid;");
+window.location = "/";
+}
+setTimeout(checkCurrentSession , 60000);
+}, "json");
+}
+$(document).ready(function(){
+checkCurrentSession();
+});
+
+
+
+
+
+
+
+
+
+  (function() {
+    var link = document.createElement('link');
+    link.setAttribute('rel', 'preload');
+    link.setAttribute('href', 'https://launchpad.privacymanager.io/latest/launchpad.bundle.js');
+    link.setAttribute('as', 'script');
+    document.head.appendChild(link);
+  })();
+
+
+
+
+
+(function(){var g=function(g){
+
+this.go=function(){var a=document.createElement("script");a.type="text/javascript";a.src=g;document.body&&document.body.appendChild(a)};
+
+this.start=function(){var t=this;"complete"!==document.readyState?window.addEventListener?window.addEventListener("load",function(){t.go()},!1):window.attachEvent&&window.attachEvent("onload",function(){t.go()}):t.go()};};
+
+try{(new g("https://zn2dsxmcnjb5ttkag-rmitnonacademic.siteintercept.qualtrics.com/SIE/?Q_ZID=ZN_2dsXMcnjb5TtkaG")).start()}catch(i){}})();
+
+
+
+
+function setCookie(e,t,n){var o="";if(n){var i=new Date;i.setTime(i.getTime()+24*n*60*60*1e3),o="; expires="+i.toUTCString()}document.cookie=e+"="+t+o+"; path=/",setTimeout((function(){document.cookie=e+"=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/"}),2e3)}function getCookie(e){for(var t=e+"=",n=document.cookie.split(";"),o=0;o<n.length;o++){for(var i=n[o];" "==i.charAt(0);)i=i.substring(1,i.length);if(0==i.indexOf(t))return i.substring(t.length,i.length)}return null}document.addEventListener("DOMContentLoaded",(function(){getCookie("launcherState")||setCookie("launcherState","minButton:closed",1)})),document.getElementById("launcherButton").addEventListener("click",(function(){setCookie("launcherState","launcherButton:open",1)})),document.getElementById("minButton").addEventListener("click",(function(){setCookie("launcherState","minButton:closed",1)})),document.getElementById("prechatSubmit").addEventListener("click",(function(){setCookie("launcherState","prechatSubmit:submitted",1)}));
+_satellite["_runScript1"](function(event, target, Promise) {
+function cleanObject(e){return Object.fromEntries(Object.entries(e).filter((([,e])=>null!=e&&""!==e)))}async function sha256(e){const t=(new TextEncoder).encode(e),a=await crypto.subtle.digest("SHA-256",t);return Array.from(new Uint8Array(a)).map((e=>e.toString(16).padStart(2,"0"))).join("")}var sprgname=$(this).parent().parent().children().eq(1).children("strong").text()?.toLowerCase()||"",sprgcode=$(this).parent().parent().children().eq(0).text().split(" ")[0]?.replace("Available","").toLowerCase()||"";document.querySelector("button.btn.btn-info.btn-sm")?.addEventListener("click",(function(){const e=cleanObject({source:"Application"});const t=[{event:"application",action:"Application Program Search",pageinfo:cleanObject({contenttype:"Application",sitename:"StudyLink Application",platform:"Web"}),userinfo:e,appinfo:cleanObject({type:"Study Link"})}];window.adobeDataLayer=window.adobeDataLayer||[],window.adobeDataLayer.push(...t)}));const{href:pageurl,pathname:pagepath="",hostname:hostname}=window.location,applicationtype="StudyLink Application",referrer=document.referrer?new URL(document.referrer):null,referrerPageValue=referrer?.searchParams.get("page")||"";let pagevalue=new URL(pageurl).searchParams.get("page")||"";const eventvalue=new URL(pageurl).searchParams.get("event")||"",cvpk=new URL(pageurl).searchParams.get("cvpk")||"";let countrycode,phone,username,applicationNumber,action,country;eventvalue.includes("Login")&&(window._satellite?.cookie.remove("fullPhoneNumberHash"),username=document.querySelector('input[name="username"]'),username?.addEventListener("input",(e=>{sha256(e.target.value).then((e=>{_satellite.cookie.set("formEmailHash",e),_satellite.cookie.set("loginIdHash",e)}))}))),eventvalue.includes("registration.form")&&(window._satellite?.cookie.remove("fullPhoneNumberHash"),window._satellite?.cookie.remove("selectedCountryName"),username=document.getElementById("email"),username?.addEventListener("input",(e=>{sha256(e.target.value).then((e=>{_satellite.cookie.set("formEmailHash",e),_satellite.cookie.set("loginIdHash",e)}))})));const eventtype=event?.detail||event?.message||event?.target;let strongText;if(window.eventtype=eventtype,eventtype)if("Apply Now"===eventtype.value){const e=eventtype.closest("tr");strongText=e.querySelector("strong")?.innerText,strongText&&console.log("Program Title:",strongText),action="Application Start"}else if("Delete Application"===eventtype.value)action="Application Delete";else if(eventtype.href?.includes("application-continue"))applicationNumber=new URL(eventtype.href).searchParams.get("applicationID")||"",action="Application Resume";else if(["Save & Close","Save"].includes(eventtype.defaultValue))action="Save & Close"===eventtype.defaultValue?"Application Saved & Closed":"Application Saved";else if("Save & Continue"===eventtype.value){const e=document.getElementById("fieldID_506998_dt1")||document.getElementById("fieldID_506163_dt1"),t=document.getElementById("fieldID_506999_dt1")||document.getElementById("fieldID_506164_dt9");if(countrycode=e?.value?.substring(e.value.indexOf("+")).split("=")[0]||"",phone=t?.value||"",countrycode&&phone){sha256(countrycode.replace(/\s+/g,"")+phone.replace(/\s+/g,"")).then((e=>_satellite.cookie.set("fullPhoneNumberHash",e,{expires:.0208})))}setTimeout((()=>{const e=document.querySelector("#fieldID_506976_dt1"),t=document.querySelector("#fieldID_506142_dt1");let a="";e&&e.selectedOptions.length>0?a=e.selectedOptions[0].text:t&&t.selectedOptions.length>0?a=t.selectedOptions[0].text:console.warn("No selected country found in either dropdown.");const n=decodeURIComponent(a||"");n?_satellite.cookie.set("selectedCountryName",n,{expires:.04167,path:"/"}):console.warn("Country not set. Skipping cookie write.")}),300)}else action="Application Page Load";else["Application Delete","Application Start"].includes(_satellite.getVar("app_eventtype"))&&(applicationNumber=_satellite.getVar("app_no"),action=_satellite.getVar("app_eventtype"));const isEOI="EOI"===document.querySelectorAll(".btn.btn-outline-secondary.btn-sm.progressBarS3")[1]?.innerText,eoiMap={1:2,intro:1,attachments:3,checklist:4,submit:5},defaultMap={1:2,2:3,3:4,intro:1,attachments:5,checklist:6,submit:7};let stepno=(isEOI?eoiMap:defaultMap)[pagevalue]??pagevalue;stepno="student.application.select"===eventvalue?2:stepno;let appInfo=cleanObject({id:applicationNumber,type:"Study Link",step:cvpk?1:stepno,stepname:pagevalue});const pagename="rmit:application:studylink:"+pagepath.replaceAll("/",":").replace(/:$/,""),name=pagepath.split("/").pop().replace(".do","");let hashedFormEmail=_satellite.cookie.get("formEmailHash")||"",hashedFormPhone=_satellite.cookie.get("fullPhoneNumberHash")||"",hashedLoginEmail=_satellite.cookie.get("loginIdHash")||"";const shouldPushDataLayer="student.application.submitConfirmation"===eventvalue;if(shouldPushDataLayer){const e=(()=>{const e=Array.from(document.querySelectorAll('td[valign="top"] b div')).map((e=>e.textContent.trim())).filter(Boolean);return e.length>0?e:[window?.servian?.tracking?.application?.courseName].filter(Boolean)})();applicationNumber=Array.from(document.querySelectorAll("tr")).find((e=>e.querySelectorAll("td")[0]?.textContent.includes("RMIT Application Number:")))?.querySelectorAll("td")[2]?.textContent.trim()||"",appInfo=cleanObject({id:applicationNumber,type:"Study Link"});const t=cleanObject({userid:hashedLoginEmail,hashedemail:hashedFormEmail,hashedphone:hashedFormPhone,source:"Application",countryofresidence:getCookie("selectedCountryName")||""}),a=cleanObject({contenttype:"Application",sitename:applicationtype,platform:"Web",path:pagepath,pagename:pagename,url:pageurl});let n=0;e.forEach((e=>{setTimeout((()=>{window.adobeDataLayer=window.adobeDataLayer||[],window.adobeDataLayer.push({event:"application",action:"Application Submit",pageinfo:a,userinfo:t,programinfo:{programname:e},appinfo:appInfo})}),n),n+=50}))}else{const e=cleanObject({userid:hashedLoginEmail,hashedemail:hashedFormEmail,hashedphone:hashedFormPhone,source:"Application",countryofresidence:getCookie("selectedCountryName")||""});action=action||"Application Page Load";const t=[{event:"application",action:action,pageinfo:cleanObject({contenttype:"Application",sitename:applicationtype,platform:"Web",path:pagepath,pagename:pagename,url:pageurl}),userinfo:e,appinfo:appInfo,programinfo:{programname:strongText||sprgname,programcode:sprgcode}}];window.adobeDataLayer=window.adobeDataLayer||[],window.adobeDataLayer.push(...t)}
+});
